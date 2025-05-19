@@ -5,6 +5,8 @@ import { inputRules } from 'prosemirror-inputrules';
 import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import React, { memo, useEffect, useRef } from 'react';
+import { Button } from './ui/button';
+import { toast } from 'sonner';
 
 import type { Suggestion } from '@/lib/db/schema';
 import {
@@ -145,8 +147,44 @@ function PureEditor({
     }
   }, [suggestions, content]);
 
+  const handleExport = async (type: 'pdf' | 'docx') => {
+    try {
+      const response = await fetch(`/api/export/${type}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to export');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `document.${type === 'pdf' ? 'pdf' : 'docx'}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error('Failed to export');
+    }
+  };
+
   return (
-    <div className="relative prose dark:prose-invert" ref={containerRef} />
+    <div>
+      <div className="relative prose dark:prose-invert" ref={containerRef} />
+      <div className="mt-2 flex gap-2">
+        <Button variant="outline" onClick={() => handleExport('pdf')}>
+          Export as PDF
+        </Button>
+        <Button variant="outline" onClick={() => handleExport('docx')}>
+          Export as DOCX
+        </Button>
+      </div>
+    </div>
   );
 }
 
