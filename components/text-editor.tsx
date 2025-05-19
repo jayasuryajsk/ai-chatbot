@@ -18,6 +18,8 @@ import {
   buildContentFromDocument,
   buildDocumentFromContent,
   createDecorations,
+  extractHeadings,
+  type Heading,
 } from '@/lib/editor/functions';
 import {
   projectWithPositions,
@@ -32,6 +34,8 @@ type EditorProps = {
   isCurrentVersion: boolean;
   currentVersionIndex: number;
   suggestions: Array<Suggestion>;
+  onHeadingsChange?: (headings: Heading[]) => void;
+  editorViewRef?: React.MutableRefObject<EditorView | null>;
 };
 
 function PureEditor({
@@ -39,6 +43,8 @@ function PureEditor({
   onSaveContent,
   suggestions,
   status,
+  onHeadingsChange,
+  editorViewRef,
 }: EditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorView | null>(null);
@@ -66,12 +72,21 @@ function PureEditor({
       editorRef.current = new EditorView(containerRef.current, {
         state,
       });
+      if (editorViewRef) {
+        editorViewRef.current = editorRef.current;
+      }
+      if (onHeadingsChange) {
+        onHeadingsChange(extractHeadings(state.doc));
+      }
     }
 
     return () => {
       if (editorRef.current) {
         editorRef.current.destroy();
         editorRef.current = null;
+        if (editorViewRef) {
+          editorViewRef.current = null;
+        }
       }
     };
     // NOTE: we only want to run this effect once
@@ -86,6 +101,7 @@ function PureEditor({
             transaction,
             editorRef,
             onSaveContent,
+            onHeadingsChange,
           });
         },
       });
@@ -109,6 +125,9 @@ function PureEditor({
 
         transaction.setMeta('no-save', true);
         editorRef.current.dispatch(transaction);
+        if (onHeadingsChange) {
+          onHeadingsChange(extractHeadings(editorRef.current.state.doc));
+        }
         return;
       }
 
@@ -123,6 +142,9 @@ function PureEditor({
 
         transaction.setMeta('no-save', true);
         editorRef.current.dispatch(transaction);
+        if (onHeadingsChange) {
+          onHeadingsChange(extractHeadings(editorRef.current.state.doc));
+        }
       }
     }
   }, [content, status]);
@@ -195,7 +217,9 @@ function areEqual(prevProps: EditorProps, nextProps: EditorProps) {
     prevProps.isCurrentVersion === nextProps.isCurrentVersion &&
     !(prevProps.status === 'streaming' && nextProps.status === 'streaming') &&
     prevProps.content === nextProps.content &&
-    prevProps.onSaveContent === nextProps.onSaveContent
+    prevProps.onSaveContent === nextProps.onSaveContent &&
+    prevProps.onHeadingsChange === nextProps.onHeadingsChange &&
+    prevProps.editorViewRef === nextProps.editorViewRef
   );
 }
 
