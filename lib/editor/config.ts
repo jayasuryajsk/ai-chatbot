@@ -9,7 +9,27 @@ import type { MutableRefObject } from 'react';
 import { buildContentFromDocument } from './functions';
 
 export const documentSchema = new Schema({
-  nodes: addListNodes(schema.spec.nodes, 'paragraph block*', 'block'),
+  nodes: addListNodes(schema.spec.nodes, 'paragraph block*', 'block').update(
+    'cursor',
+    {
+      inline: true,
+      atom: true,
+      selectable: false,
+      attrs: { sessionId: { default: '' } },
+      toDOM: (node) => [
+        'span',
+        { class: 'pm-cursor', 'data-session-id': node.attrs.sessionId },
+      ],
+      parseDOM: [
+        {
+          tag: 'span.pm-cursor',
+          getAttrs: (dom) => ({
+            sessionId: (dom as HTMLElement).getAttribute('data-session-id') || '',
+          }),
+        },
+      ],
+    },
+  ),
   marks: schema.spec.marks,
 });
 

@@ -5,6 +5,9 @@ import { inputRules } from 'prosemirror-inputrules';
 import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import React, { memo, useEffect, useRef } from 'react';
+import * as Y from 'yjs';
+import { WebsocketProvider } from 'y-websocket';
+import { ySyncPlugin, yCursorPlugin, yUndoPlugin } from 'y-prosemirror';
 
 import type { Suggestion } from '@/lib/db/schema';
 import {
@@ -40,12 +43,25 @@ function PureEditor({
 }: EditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorView | null>(null);
+  const ydocRef = useRef<Y.Doc | null>(null);
+  const providerRef = useRef<WebsocketProvider | null>(null);
 
   useEffect(() => {
     if (containerRef.current && !editorRef.current) {
+      ydocRef.current = new Y.Doc();
+      providerRef.current = new WebsocketProvider(
+        process.env.NEXT_PUBLIC_COLLAB_URL || 'ws://localhost:1234',
+        'prosemirror',
+        ydocRef.current,
+      );
+      const type = ydocRef.current.getXmlFragment('prosemirror');
       const state = EditorState.create({
         doc: buildDocumentFromContent(content),
+        schema: documentSchema,
         plugins: [
+          ySyncPlugin(type),
+          yCursorPlugin(providerRef.current.awareness),
+          yUndoPlugin(),
           ...exampleSetup({ schema: documentSchema, menuBar: false }),
           inputRules({
             rules: [
@@ -71,6 +87,10 @@ function PureEditor({
         editorRef.current.destroy();
         editorRef.current = null;
       }
+      providerRef.current?.destroy();
+      providerRef.current = null;
+      ydocRef.current?.destroy();
+      ydocRef.current = null;
     };
     // NOTE: we only want to run this effect once
     // eslint-disable-next-line

@@ -162,3 +162,7 @@
 .suggestion-highlight {
     @apply bg-blue-200 hover:bg-blue-300 dark:hover:bg-blue-400/50 dark:text-blue-50 dark:bg-blue-500/40;
 }
+
+.pm-cursor {
+    @apply w-px bg-blue-500 inline-block h-4 align-text-top;
+}
