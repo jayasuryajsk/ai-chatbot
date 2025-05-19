@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import type { User } from 'next-auth';
 import { useRouter } from 'next/navigation';
 
@@ -18,7 +19,13 @@ import {
 import Link from 'next/link';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
-export function AppSidebar({ user }: { user: User | undefined }) {
+export function AppSidebar({
+  user,
+  extraContent,
+}: {
+  user: User | undefined;
+  extraContent?: ReactNode;
+}) {
   const router = useRouter();
   const { setOpenMobile } = useSidebar();
 
@@ -60,6 +67,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarHistory user={user} />
+        {extraContent}
       </SidebarContent>
       <SidebarFooter>{user && <SidebarUserNav user={user} />}</SidebarFooter>
     </Sidebar>

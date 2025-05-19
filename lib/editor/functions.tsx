@@ -60,3 +60,23 @@ export const createDecorations = (
 
   return DecorationSet.create(view.state.doc, decorations);
 };
+
+export type Heading = {
+  level: number;
+  text: string;
+  pos: number;
+};
+
+export const extractHeadings = (doc: Node): Heading[] => {
+  const headings: Heading[] = [];
+  doc.descendants((node, pos) => {
+    if (node.type.name === 'heading') {
+      headings.push({
+        level: node.attrs.level,
+        text: node.textContent,
+        pos,
+      });
+    }
+  });
+  return headings;
+};

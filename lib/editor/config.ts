@@ -6,7 +6,7 @@ import type { Transaction } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import type { MutableRefObject } from 'react';
 
-import { buildContentFromDocument } from './functions';
+import { buildContentFromDocument, extractHeadings, type Heading } from './functions';
 
 export const documentSchema = new Schema({
   nodes: addListNodes(schema.spec.nodes, 'paragraph block*', 'block'),
@@ -25,15 +25,21 @@ export const handleTransaction = ({
   transaction,
   editorRef,
   onSaveContent,
+  onHeadingsChange,
 }: {
   transaction: Transaction;
   editorRef: MutableRefObject<EditorView | null>;
   onSaveContent: (updatedContent: string, debounce: boolean) => void;
+  onHeadingsChange?: (headings: Heading[]) => void;
 }) => {
   if (!editorRef || !editorRef.current) return;
 
   const newState = editorRef.current.state.apply(transaction);
   editorRef.current.updateState(newState);
+
+  if (onHeadingsChange) {
+    onHeadingsChange(extractHeadings(newState.doc));
+  }
 
   if (transaction.docChanged && !transaction.getMeta('no-save')) {
     const updatedContent = buildContentFromDocument(newState.doc);
