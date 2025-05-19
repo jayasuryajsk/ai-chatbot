@@ -7,15 +7,14 @@ const documentsCreatedByAda: Array<Document> = [];
 
 test.describe
   .serial('/api/document', () => {
-    test('Ada cannot retrieve a document without specifying an id', async ({
+    test('Ada can retrieve all documents without specifying an id', async ({
       adaContext,
     }) => {
       const response = await adaContext.request.get('/api/document');
-      expect(response.status()).toBe(400);
+      expect(response.status()).toBe(200);
 
-      const { code, message } = await response.json();
-      expect(code).toEqual('bad_request:api');
-      expect(message).toEqual(getMessageByErrorCode(code));
+      const documents = await response.json();
+      expect(documents).toEqual([]);
     });
 
     test('Ada cannot retrieve a document that does not exist', async ({

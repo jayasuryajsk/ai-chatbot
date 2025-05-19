@@ -324,6 +324,21 @@ export async function getDocumentsById({ id }: { id: string }) {
   }
 }
 
+export async function getDocumentsByUserId({ id }: { id: string }) {
+  try {
+    return await db
+      .select()
+      .from(document)
+      .where(eq(document.userId, id))
+      .orderBy(desc(document.createdAt));
+  } catch (error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to get documents by user id',
+    );
+  }
+}
+
 export async function getDocumentById({ id }: { id: string }) {
   try {
     const [selectedDocument] = await db

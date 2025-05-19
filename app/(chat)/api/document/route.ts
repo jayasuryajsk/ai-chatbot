@@ -3,6 +3,7 @@ import type { ArtifactKind } from '@/components/artifact';
 import {
   deleteDocumentsByIdAfterTimestamp,
   getDocumentsById,
+  getDocumentsByUserId,
   saveDocument,
 } from '@/lib/db/queries';
 import { ChatSDKError } from '@/lib/errors';
@@ -11,17 +12,15 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
 
-  if (!id) {
-    return new ChatSDKError(
-      'bad_request:api',
-      'Parameter id is missing',
-    ).toResponse();
-  }
-
   const session = await auth();
 
   if (!session?.user) {
     return new ChatSDKError('unauthorized:document').toResponse();
+  }
+
+  if (!id) {
+    const documents = await getDocumentsByUserId({ id: session.user.id });
+    return Response.json(documents, { status: 200 });
   }
 
   const documents = await getDocumentsById({ id });
